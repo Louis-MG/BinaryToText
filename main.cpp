@@ -26,14 +26,14 @@ int main(int argc, char** argv) {
         std::exit(1);
     }
 
-    stream.read(buffer, size);
 
-    // write to outfile
-    outstream.write (buffer,size);
+    // read data as a block:
+    stream.read (buffer,size);
 
+    // print content:
+    std::cout.write (buffer,size);
     // release dynamically-allocated memory
     delete[] buffer;
-
     outstream.close();
     stream.close();
 
