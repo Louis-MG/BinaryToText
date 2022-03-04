@@ -1,10 +1,11 @@
 #include <iostream>
 #include <fstream>
-#include <cerrno>
 
-int main(int argc, char** argv) {
-    std::string matrix;
-    matrix = argv[1];
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        std::cerr << "ERROR: invalid number of arguments" << std::endl;
+    }
+    std::string matrix = argv[1];
     //std::string output = argv[2];
     std::ifstream stream (matrix, std::ifstream::binary);
     //std::ofstream outstream;
