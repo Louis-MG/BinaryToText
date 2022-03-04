@@ -6,6 +6,16 @@ int main(int argc, char** argv) {
     std::string matrix = argv[1];
     std::string output = argv[2];
     std::ifstream stream;
+    std::ofstream outstream;
+
+    // get size of file
+    stream.seekg (0,stream.end);
+    long size = stream.tellg();
+    stream.seekg (0);
+
+    // allocate memory for file content
+    char* buffer = new char[size];
+
     stream.open(matrix, std::ios::binary);
     //must use stream.fail() with a switch case to now if the thing went fine : no
     // file operation causes C++ to stop.
@@ -15,14 +25,18 @@ int main(int argc, char** argv) {
         perror("ERROR: could not open file:");
         std::exit(1);
     }
-    //after opening the file, we must read it :
-    while(! stream.eof())
-    {
-        std::string line ;
-        while(getline(stream, line)) {
-            std::cout << line << std::endl;
-        }
-    }
+
+    stream.read(buffer, size);
+
+    // write to outfile
+    outstream.write (buffer,size);
+
+    // release dynamically-allocated memory
+    delete[] buffer;
+
+    outstream.close();
+    stream.close();
+
     return 0;
     //ofstream for output
 }
