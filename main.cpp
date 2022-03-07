@@ -1,10 +1,14 @@
 #include <iostream>
 #include <fstream>
+#include <vector>
+
+void process_line(std::string &line);
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
         std::cerr << "ERROR: invalid number of arguments" << std::endl;
     }
+    std::string line;
     std::string matrix = argv[1];
     //std::string output = argv[2];
     std::ifstream stream (matrix, std::ifstream::binary);
@@ -19,24 +23,38 @@ int main(int argc, char* argv[]) {
         std::exit(1);
     }
 
-    // get size of file
-    stream.seekg (0,stream.end);
-    long size = stream.tellg();
-    stream.seekg (0, stream.beg);
-
-    // allocate memory for file content
-    char* buffer = new char[size];
-
     // read data as a block:
-    stream.read (buffer,size);
+    //stream.read (buffer,size);
 
-    // print content:
-    std::cout.write (buffer,size);
-    // release dynamically-allocated memory
-    delete[] buffer;
+    //read data by chunks
+    std::vector<char> buffer (4096,0); //reads only the first 4096 bytes
+    while(!stream.good()) { //dont use !stream.eof() because it wont reach
+        // the endOfFile as long as we did not actually read it until
+        // the end
+        stream.read(buffer.data(), buffer.size());
+        std::streamsize s=stream.gcount();
+        //read the data line by line:
+        while (std::getline(stream, line)) //cant use s because int
+        {
+            //std::istringstream iss(line);
+            process_line(line);
+        }
+
+    }
     //outstream.close();
     stream.close();
 
     return 0;
     //ofstream for output
+}
+
+void process_line(std::string &line) {
+    std::string delimiter="\t";
+    size_t pos;
+    std::string token;
+    while ( (pos = line.find(delimiter)) != std::string::npos ) {
+        token = line.substr(0, pos); //extracts substring from string : characters before delimiter
+        std::cout << token << std::endl; //output
+        line.erase(0, pos + delimiter.length()); //cuts the part we read unit delimiter was met plus delimiter length
+    }
 }
