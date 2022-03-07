@@ -2,7 +2,7 @@
 #include <fstream>
 #include <cstring>
 
-void process_line(std::string &line);
+void process_line(char * line);
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
@@ -13,8 +13,6 @@ int main(int argc, char* argv[]) {
     //std::string output = argv[2];
     std::ifstream stream (matrix, std::ifstream::binary);
     //std::ofstream outstream;
-
-    std::cout << "this is fine 1" << std::endl;
 
     //must use stream.fail() with a switch case to now if the thing went fine : no
     // file operation causes C++ to stop.
@@ -28,21 +26,18 @@ int main(int argc, char* argv[]) {
     //stream.read (buffer,size);
 
     //read data by chunks
-    //std::vector<char> buffer (4096,0); //reads only the first 4096 bytes
     char buffer[4096];
     while(stream.good()) { //dont use !stream.eof() because it wont reach
         // the endOfFile as long as we did not actually read it until
         // the end
         stream.read(buffer, sizeof buffer);
-        std::streamsize s=stream.gcount();
-        std::cout << s << std::endl;
         //read the data line by line:
-        char *line = strtok(buffer, "\n");
+        char * line = strtok(buffer, "\n");
         while (line) {
-            std::string line_to_str;
-            line_to_str = line;
-            process_line(line_to_str);
-            line = strtok(buffer, "\n");
+            process_line(line);
+            //using NULL instead of buffer in strtok() signals it is not the first call
+            //of the function: allows to access to more than the 1st token (here named line)
+            line = strtok(NULL, "\n");
         }
     }
     //outstream.close();
@@ -52,13 +47,14 @@ int main(int argc, char* argv[]) {
     //ofstream for output
 }
 
-void process_line(std::string &line) {
-    std::string delimiter="\t";
-    size_t pos;
-    std::string token;
-    while ( (pos = line.find(delimiter)) != std::string::npos ) {
-        token = line.substr(0, pos); //extracts substring from string : characters before delimiter
-        std::cout << token << std::endl; //output
-        line.erase(0, pos + delimiter.length()); //cuts the part we read unit delimiter was met plus delimiter length
+void process_line(char * line) {
+    //access the 1st token
+    char * token = strtok(line, "\t");
+    //as long as we can go without having an empty token
+    while (token) {
+        std::string token_to_str ;
+        token_to_str = token;
+        std::cout << token_to_str << std::endl; //output
+        token = strtok(NULL, "\t");
     }
 }
