@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstring>
+#include <string>
 
 void process_line(char * line);
 
@@ -32,29 +33,34 @@ int main(int argc, char* argv[]) {
         // the end
         stream.read(buffer, sizeof buffer);
         //read the data line by line:
-        char * line = strtok(buffer, "\n");
-        while (line) {
-            process_line(line);
+
+        char * token = strtok(buffer, "\t\n");
+        while (token) {
+            process_line(token);
             //using NULL instead of buffer in strtok() signals it is not the first call
             //of the function: allows to access to more than the 1st token (here named line)
-            line = strtok(NULL, "\n");
+            token = strtok(NULL, "\n\t");
         }
     }
     //outstream.close();
     stream.close();
-    //delete[] buffer;
     return 0;
     //ofstream for output
 }
 
-void process_line(char * line) {
-    //access the 1st token
-    char * token = strtok(line, "\t");
-    //as long as we can go without having an empty token
-    while (token) {
-        std::string token_to_str ;
-        token_to_str = token;
-        std::cout << token_to_str << std::endl; //output
-        token = strtok(NULL, "\t");
+void process_line(char * token) {
+    std::string output_token;
+    std::string tokenToString;
+    tokenToString = token;
+    if (tokenToString.starts_with(">")) {
+        output_token = tokenToString;
     }
+    else if (tokenToString.ends_with("*")) {
+        output_token + "\t0";
+    }
+    else {
+        output_token + "\t1";
+    }
+    output_token + "\n";
+    std::cout << output_token << std::endl;
 }
