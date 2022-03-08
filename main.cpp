@@ -1,9 +1,9 @@
 #include <iostream>
 #include <fstream>
-#include <cstring>
 #include <string>
+#include <sstream>
 
-void process_line(char * line);
+std::string process_line(const std::string& line_buffer);
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
@@ -23,24 +23,17 @@ int main(int argc, char* argv[]) {
         std::exit(1);
     }
 
-    // read data as a block:
-    //stream.read (buffer,size);
-
     //read data by chunks
-    char buffer[4096];
     while(stream.good()) { //dont use !stream.eof() because it wont reach
         // the endOfFile as long as we did not actually read it until
-        // the end
-        stream.read(buffer, sizeof buffer);
         //read the data line by line:
-
-        char * token = strtok(buffer, "\t\n");
-        while (token) {
-            process_line(token);
-            //using NULL instead of buffer in strtok() signals it is not the first call
-            //of the function: allows to access to more than the 1st token (here named line)
-            token = strtok(NULL, "\n\t");
+        std::string line_buffer;
+        std::string variable;
+        while(std::getline(stream, line_buffer).good()) {
+            variable = process_line(line_buffer);
+            std::cout << variable << std::endl;
         }
+
     }
     //outstream.close();
     stream.close();
@@ -48,19 +41,18 @@ int main(int argc, char* argv[]) {
     //ofstream for output
 }
 
-void process_line(char * token) {
-    std::string output_token;
-    std::string tokenToString;
-    tokenToString = token;
-    if (tokenToString.starts_with(">")) {
-        output_token = tokenToString;
+std::string process_line(const std::string& line_buffer) {
+    std::string output_line;
+    std::istringstream input;
+    input.str(line_buffer);
+    for (std::string word; std::getline(input, word, '\t'); ) {
+        if (word.starts_with(">")) {
+            output_line = word;
+        } else if (word.ends_with("*")) {
+            output_line.append("\t0");
+        } else {
+            output_line.append("\t1");
+        }
     }
-    else if (tokenToString.ends_with("*")) {
-        output_token + "\t0";
-    }
-    else {
-        output_token + "\t1";
-    }
-    output_token + "\n";
-    std::cout << output_token << std::endl;
+    return output_line;
 }
