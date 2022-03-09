@@ -8,6 +8,7 @@ std::string process_line(const std::string& line_buffer);
 int main(int argc, char* argv[]) {
     if (argc != 3) {
         std::cerr << "ERROR: invalid number of arguments" << std::endl;
+        exit(1);
     }
     std::string();
     std::string matrix = argv[1];
