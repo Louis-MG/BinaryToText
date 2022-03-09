@@ -11,8 +11,8 @@ int main(int argc, char* argv[]) {
         exit(1);
     }
     std::string();
-    std::string matrix = argv[1];
-    std::string output = argv[2];
+    std::string matrix = argv[1]; //input abundance matrix
+    std::string output = argv[2]; //output presence/absence matrix
     std::ifstream stream (matrix, std::ifstream::binary);
     std::ofstream outstream (output, std::ofstream::binary);
 
@@ -28,14 +28,15 @@ int main(int argc, char* argv[]) {
     }
 
     //read data by chunks
-    while(stream.good() and outstream.good()) { //dont use !stream.eof() because it wont reach
+    while(stream.good() and outstream.good()) {
+        //dont use !stream.eof() because it won't reach
         // the endOfFile as long as we did not actually read it until
         //read the data line by line:
         std::string line_buffer;
-        std::string variable;
+        std::string line;
         while(std::getline(stream, line_buffer).good()) {
-            variable = process_line(line_buffer);
-            outstream << variable << std::endl;
+            line = process_line(line_buffer);
+            outstream << line << std::endl;
         }
 
     }
@@ -49,13 +50,14 @@ std::string process_line(const std::string& line_buffer) {
     std::string output_line;
     std::istringstream input;
     input.str(line_buffer);
+    //loop over tab-separated words in the line :
     for (std::string word; std::getline(input, word, '\t'); ) {
-        if (word.starts_with(">")) {
+        if (word.starts_with(">")) { // if id resets line
             output_line = word;
-        } else if (word.ends_with("*")) {
+        } else if (word.ends_with("*")) { // if abundance is 0
             output_line.append("\t0");
         } else {
-            output_line.append("\t1");
+            output_line.append("\t1"); // if abundance is anything else than 0
         }
     }
     return output_line;
