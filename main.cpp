@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include <chrono>
 
 std::string process_line(const std::string& line_buffer);
 
@@ -10,6 +11,10 @@ int main(int argc, char* argv[]) {
         std::cerr << "ERROR: invalid number of arguments" << std::endl;
         exit(1);
     }
+
+    //measuring time
+    auto t1 = std::chrono::high_resolution_clock::now();
+
     std::string();
     std::string matrix = argv[1]; //input abundance matrix
     std::string output = argv[2]; //output presence/absence matrix
@@ -42,8 +47,11 @@ int main(int argc, char* argv[]) {
     }
     outstream.close();
     stream.close();
+    //finishing measuring time
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+    std::cout << ms_int.count() << "ms\n";
     return 0;
-    //ofstream for output
 }
 
 std::string process_line(const std::string& line_buffer) {
