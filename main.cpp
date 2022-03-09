@@ -15,6 +15,7 @@ int main(int argc, char* argv[]) {
     //measuring time
     auto t1 = std::chrono::high_resolution_clock::now();
 
+    std::cout << "Starting conversion of abundance matrix to presence/absence matrix ..." << std::endl;
     std::string();
     std::string matrix = argv[1]; //input abundance matrix
     std::string output = argv[2]; //output presence/absence matrix
@@ -50,7 +51,7 @@ int main(int argc, char* argv[]) {
     //finishing measuring time
     auto t2 = std::chrono::high_resolution_clock::now();
     auto ms_int = std::chrono::duration_cast<std::chrono::seconds>(t2 - t1);
-    std::cout << ms_int.count() << "ms\n";
+    std::cout << "Conversion took " << ms_int.count() << "ms\n";
     return 0;
 }
 
