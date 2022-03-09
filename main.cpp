@@ -5,12 +5,12 @@
 #include <chrono>
 #include <vector>
 
-std::string process_line(const std::string& line_buffer);
-
 struct kmer {
     std::string name;
     std::vector<int> pattern;
 };
+
+kmer process_line(const std::string& line_buffer);
 
 int main(int argc, char* argv[]) {
     if (argc != 3) {
@@ -48,12 +48,13 @@ int main(int argc, char* argv[]) {
         std::string line_buffer;
         std::string line;
         while(std::getline(stream, line_buffer).good()) {
-            kmer kmer_buffer = process_line(line_buffer);
+            kmer kmer_buffer ;
+            kmer_buffer = process_line(line_buffer); //error: conversion from ‘std::string’ {aka ‘std::__cxx11::basic_string<char>’} to non-scalar type ‘kmer’ requested
             vectorOfKmers.push_back(kmer_buffer);
             //outstream << line << std::endl;
         }
     }
-    stream.close()
+    stream.close();
 
     //iterate with iterator on vectorOfKmer
 
@@ -66,18 +67,19 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-std::string process_line(const std::string& line_buffer) {
+kmer process_line(const std::string& line_buffer) {
     /*
      * this function processes lines by puting them in a structure than contains  its name, and a vector of its absence/presence pattern.
      */
     std::vector<int> output_pattern;
     output_pattern.clear();
     std::istringstream input;
+    std::string kmer_name;
     input.str(line_buffer);
     //loop over tab-separated words in the line :
     for (std::string word; std::getline(input, word, '\t'); ) {
         if (word.starts_with(">")) { // if id resets line
-            std::string kmer_name = word;
+            kmer_name = word;
         } else if (word.ends_with("*")) { // if abundance is 0
             output_pattern.push_back(0);
         } else {
