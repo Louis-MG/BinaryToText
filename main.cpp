@@ -50,8 +50,8 @@ int main(int argc, char* argv[]) {
     stream.close();
     //finishing measuring time
     auto t2 = std::chrono::high_resolution_clock::now();
-    auto ms_int = std::chrono::duration_cast<std::chrono::seconds>(t2 - t1);
-    std::cout << "Conversion took " << ms_int.count() << "seconds\n";
+    auto ms_int = std::chrono::duration_cast<std::chrono::minutes>(t2 - t1);
+    std::cout << "Conversion took " << ms_int.count() << "min\n";
     return 0;
 }
 
