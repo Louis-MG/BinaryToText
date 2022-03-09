@@ -46,17 +46,26 @@ int main(int argc, char* argv[]) {
         // the endOfFile as long as we did not actually read it until
         //read the data line by line:
         std::string line_buffer;
-        std::string line;
         while(std::getline(stream, line_buffer).good()) {
             kmer kmer_buffer ;
             kmer_buffer = process_line(line_buffer); //error: conversion from ‘std::string’ {aka ‘std::__cxx11::basic_string<char>’} to non-scalar type ‘kmer’ requested
             vectorOfKmers.push_back(kmer_buffer);
-            //outstream << line << std::endl;
         }
     }
     stream.close();
 
     //iterate with iterator on vectorOfKmer
+    for (auto i : vectorOfKmers) {
+        outstream << i.name + "\t" ;
+    }
+    outstream << "\n" ;
+    for (auto i: vectorOfKmers.at(1).pattern.size()) { //chopper la taille des vecteur de pattern des struct
+        //go through the ieme values of each vector
+        for (auto j: vectorOfKmers) {
+            outstream << j.pattern.at(i) + "\t";
+        }
+        outstream << "\n" ;
+    }
 
     outstream.close();
 
@@ -72,7 +81,6 @@ kmer process_line(const std::string& line_buffer) {
      * this function processes lines by puting them in a structure than contains  its name, and a vector of its absence/presence pattern.
      */
     std::vector<int> output_pattern;
-    output_pattern.clear();
     std::istringstream input;
     std::string kmer_name;
     input.str(line_buffer);
@@ -87,5 +95,6 @@ kmer process_line(const std::string& line_buffer) {
         }
     }
     kmer output_struct{kmer_name, output_pattern};
+    output_pattern.clear();
     return output_struct;
 }
