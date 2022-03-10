@@ -90,7 +90,7 @@ Kmer process_line(const std::string& line_buffer) {
             output_pattern.push_back(1); // if abundance is anything else than 0
         }
     }
-    Kmer output_struct{kmer_name, output_pattern};
-    output_pattern.clear();
-    return output_struct;
+    //Kmer output_struct{kmer_name, output_pattern};
+    //output_pattern.clear();
+    return {kmer_name, output_pattern};
 }
