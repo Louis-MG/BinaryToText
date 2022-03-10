@@ -5,16 +5,16 @@
 #include <chrono>
 #include <vector>
 
-struct kmer {
+struct Kmer {
     std::string name;
     std::vector<int> pattern;
 };
 
-kmer process_line(const std::string& line_buffer);
+Kmer process_line(const std::string& line_buffer);
 
 int main(int argc, char* argv[]) {
     if (argc != 3) {
-        std::cerr << "ERROR: invalid number of arguments" << std::endl;
+        std::cerr << "ERROR: usage : ./BinaryToText input.txt output.txt" << std::endl;
         exit(1);
     }
 
@@ -22,13 +22,10 @@ int main(int argc, char* argv[]) {
     auto t1 = std::chrono::high_resolution_clock::now();
 
     std::cout << "Starting conversion of abundance matrix to presence/absence matrix ..." << std::endl;
-    std::string();
     std::string matrix = argv[1]; //input abundance matrix
     std::string output = argv[2]; //output presence/absence matrix
     std::ifstream stream (matrix, std::ifstream::binary);
     std::ofstream outstream (output, std::ofstream::binary);
-    std::vector<kmer> vectorOfKmers;
-
     //must use stream.fail() with a switch case to now if the thing went fine : no
     // file operation causes C++ to stop.
     // see https://www.eecs.umich.edu/courses/eecs380/HANDOUTS/cppBinaryFileIO-2.html
@@ -39,6 +36,8 @@ int main(int argc, char* argv[]) {
         perror("ERROR: could not open output file");
         std::exit(1);
     }
+    std::vector<Kmer> vectorOfKmers;
+
 
     //read data by chunks
     while(stream.good() and outstream.good()) {
@@ -47,15 +46,13 @@ int main(int argc, char* argv[]) {
         //read the data line by line:
         std::string line_buffer;
         while(std::getline(stream, line_buffer).good()) {
-            kmer kmer_buffer ;
-            kmer_buffer = process_line(line_buffer); //error: conversion from ‘std::string’ {aka ‘std::__cxx11::basic_string<char>’} to non-scalar type ‘kmer’ requested
-            vectorOfKmers.push_back(kmer_buffer);
+            vectorOfKmers.push_back(process_line(line_buffer));
         }
     }
     stream.close();
 
     //iterate with iterator on vectorOfKmer
-    for (auto i : vectorOfKmers) {
+    for (const Kmer &i : vectorOfKmers) {
         outstream << i.name << "\t" ;
     }
     outstream << "\n" ;
@@ -76,14 +73,13 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-kmer process_line(const std::string& line_buffer) {
+Kmer process_line(const std::string& line_buffer) {
     /*
      * this function processes lines by puting them in a structure than contains  its name, and a vector of its absence/presence pattern.
      */
     std::vector<int> output_pattern;
-    std::istringstream input;
     std::string kmer_name;
-    input.str(line_buffer);
+    std::istringstream input(line_buffer);
     //loop over tab-separated words in the line :
     for (std::string word; std::getline(input, word, '\t'); ) {
         if (word.starts_with(">")) { // if id resets line
@@ -94,7 +90,7 @@ kmer process_line(const std::string& line_buffer) {
             output_pattern.push_back(1); // if abundance is anything else than 0
         }
     }
-    kmer output_struct{kmer_name, output_pattern};
+    Kmer output_struct{kmer_name, output_pattern};
     output_pattern.clear();
     return output_struct;
 }
