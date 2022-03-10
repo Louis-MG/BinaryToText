@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
         outstream << i.name + "\t" ;
     }
     outstream << "\n" ;
-    for (auto i: vectorOfKmers.at(1).pattern.size()) { //chopper la taille des vecteur de pattern des struct
+    for (int i = 0; i < vectorOfKmers.at(1).pattern.size(); ++i) { //gets the number of lines that will be written, which corresponds to the number of 0/1 in the vector pattern of the structures
         //go through the ieme values of each vector
         for (auto j: vectorOfKmers) {
             outstream << j.pattern.at(i) + "\t";
