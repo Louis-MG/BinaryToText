@@ -5,11 +5,13 @@
 #include <chrono>
 #include <vector>
 
+//this struct contains the name of a kmer, and pattern is a vector of its absence/presence
 struct Kmer {
     std::string name;
     std::vector<int> pattern;
 };
 
+// declaration
 Kmer process_line(const std::string& line_buffer);
 
 int main(int argc, char* argv[]) {
@@ -18,7 +20,7 @@ int main(int argc, char* argv[]) {
         exit(1);
     }
 
-    //measuring time
+    // measuring time
     auto t1 = std::chrono::high_resolution_clock::now();
 
     std::cout << "Starting conversion of abundance matrix to presence/absence matrix ..." << std::endl;
@@ -26,7 +28,7 @@ int main(int argc, char* argv[]) {
     std::string output = argv[2]; //output presence/absence matrix
     std::ifstream stream (matrix, std::ifstream::binary);
     std::ofstream outstream (output, std::ofstream::binary);
-    //must use stream.fail() with a switch case to now if the thing went fine : no
+    // must use stream.fail() with a switch case to now if the thing went fine : no
     // file operation causes C++ to stop.
     // see https://www.eecs.umich.edu/courses/eecs380/HANDOUTS/cppBinaryFileIO-2.html
     if (stream.fail()) {
@@ -41,9 +43,9 @@ int main(int argc, char* argv[]) {
 
     //read data by chunks
     while(stream.good() and outstream.good()) {
-        //dont use !stream.eof() because it won't reach
+        // dont use !stream.eof() because it won't reach
         // the endOfFile as long as we did not actually read it until
-        //read the data line by line:
+        // read the data line by line:
         std::string line_buffer;
         while(std::getline(stream, line_buffer).good()) {
             vectorOfKmers.push_back(process_line(line_buffer));
@@ -73,9 +75,10 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
+// definition
 Kmer process_line(const std::string& line_buffer) {
     /*
-     * this function processes lines by puting them in a structure than contains  its name, and a vector of its absence/presence pattern.
+     * this function processes lines by putting them in a structure than contains  its name, and a vector of its absence/presence pattern.
      */
     std::vector<int> output_pattern;
     std::string kmer_name;
