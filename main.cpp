@@ -60,10 +60,8 @@ int main(int argc, char* argv[]) {
     }
     outstream << "\n" ;
     for (int i = 0; i < vectorOfKmers.at(1).pattern.size(); ++i) { //gets the number of lines that will be written, which corresponds to the number of 0/1 in the vector pattern of the structures
-        std::cout << i << std::endl;
         //go through the ieme values of each vector
         for (auto j: vectorOfKmers) {
-            std::cout << j.pattern.at(i) << std::endl;
             outstream << j.pattern.at(i) << "\t";
         }
         outstream << "\n" ;
