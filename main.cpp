@@ -85,11 +85,10 @@ int main(int argc, char* argv[]) {
         }
         outstream << "\n" ;
     }
-    outstream.close();
 
     // builds a vector of unique patterns
-    for (Kmer i ; i.pattern != vector_of_kmers.end()->pattern; ) {
-        vector_of_unique_patterns.push_back(i.pattern) ;
+    for (auto i = vector_of_kmers.begin(); i->pattern != vector_of_kmers.end()->pattern; i++) {
+        vector_of_unique_patterns.push_back(i->pattern) ;
     }
 
     // gets the number of lines that will be written, which corresponds to the number of 0/1 in the pattern of each vector
@@ -102,6 +101,8 @@ int main(int argc, char* argv[]) {
         }
         outstream_unique << "\n" ;
     }
+    outstream_unique.close() ;
+    outstream.close();
 
     //finishing measuring time
     auto t2 = std::chrono::high_resolution_clock::now();
