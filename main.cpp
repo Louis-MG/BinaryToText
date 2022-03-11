@@ -55,9 +55,13 @@ int main(int argc, char* argv[]) {
         std::string line_buffer;
         while(std::getline(stream, line_buffer).good()) {
             vector_of_kmers.push_back(process_line(line_buffer));
-            for (auto &i : vector_of_unique_patterns) {
-                if (i != vector_of_kmers.end()->pattern) {
-                    vector_of_unique_patterns.push_back(vector_of_kmers.end()->pattern);
+            if (vector_of_unique_patterns.empty()) {
+                vector_of_unique_patterns.push_back(vector_of_kmers.end()->pattern);
+            } else {
+                for (auto &i : vector_of_unique_patterns) {
+                    if (i != vector_of_kmers.end()->pattern) {
+                        vector_of_unique_patterns.push_back(vector_of_kmers.end()->pattern);
+                    }
                 }
             }
         }
