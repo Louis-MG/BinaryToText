@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
         std::string line_buffer;
         while(std::getline(stream, line_buffer).good()) {
             vector_of_kmers.push_back(process_line(line_buffer));
-            if (vector_of_unique_patterns.empty()) {
+            /*if (vector_of_unique_patterns.empty()) {
                 vector_of_unique_patterns.push_back(vector_of_kmers.end()->pattern);
             } else {
                 for (auto &i : vector_of_unique_patterns) {
@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
                         vector_of_unique_patterns.push_back(vector_of_kmers.end()->pattern);
                     }
                 }
-            }
+            }*/
         }
     }
     stream.close();
@@ -86,6 +86,11 @@ int main(int argc, char* argv[]) {
         outstream << "\n" ;
     }
     outstream.close();
+
+    // builds a vector of unique patterns
+    for (Kmer i ; i.pattern != vector_of_kmers.end()->pattern; ) {
+        vector_of_unique_patterns.push_back(i.pattern) ;
+    }
 
     // gets the number of lines that will be written, which corresponds to the number of 0/1 in the pattern of each vector
     // major diffference with above is that we iterate directly on the pattern vectors instead of the structures containing them
