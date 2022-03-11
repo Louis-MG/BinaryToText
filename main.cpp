@@ -87,8 +87,11 @@ int main(int argc, char* argv[]) {
     }
 
     // builds a vector of unique patterns
-    for (auto i = vector_of_kmers.begin(); i->pattern != vector_of_kmers.end()->pattern; i++) {
-        vector_of_unique_patterns.push_back(i->pattern) ;
+
+    for (const auto &i : vector_of_kmers) {
+        vector_of_unique_patterns.push_back(i.pattern);
+        std::sort(vector_of_unique_patterns.begin(), vector_of_unique_patterns.end());
+        std::unique(vector_of_unique_patterns.begin(), vector_of_unique_patterns.end());
     }
 
     // gets the number of lines that will be written, which corresponds to the number of 0/1 in the pattern of each vector
