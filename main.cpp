@@ -54,11 +54,13 @@ int main(int argc, char* argv[]) {
     stream.close();
 
     //iterate with iterator on vectorOfKmer
+    outstream << "ps\t" ;
     for (const Kmer &i : vectorOfKmers) {
         outstream << i.name << "\t" ;
     }
     outstream << "\n" ;
     for (int i = 0; i < vectorOfKmers.at(1).pattern.size(); ++i) { //gets the number of lines that will be written, which corresponds to the number of 0/1 in the vector pattern of the structures
+        outstream << i ;
         //go through the ieme values of each vector
         for (auto j: vectorOfKmers) {
             outstream << j.pattern.at(i) << "\t";
