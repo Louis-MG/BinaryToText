@@ -4,11 +4,29 @@
 #include <sstream>
 #include <chrono>
 #include <vector>
+#include <map>
+#include <unordered_set>
 
 //this struct contains the name of a kmer, and pattern is a vector of its absence/presence
 struct Kmer {
     std::string name;
     std::vector<int> pattern;
+    // This function is used by unordered_set to compare
+    // elements of Kmer.
+    bool operator==(const Kmer& K) const
+    {
+        return (this->pattern == K.pattern);
+    }
+};
+
+// class for hash function
+class MyHashFunction {
+public:
+    // pattern is returned as hash function
+    std::vector<int> operator()(const Kmer& K) const
+    {
+        return K.pattern;
+    }
 };
 
 // declaration
@@ -44,10 +62,9 @@ int main(int argc, char* argv[]) {
         perror("ERROR: could not open output_unique file");
         std::exit(1);
     }
-    std::vector<Kmer> vector_of_kmers;
-    std::vector<std::vector<int>> vector_of_unique_patterns ;
 
-    //read data by chunks
+    std::vector<Kmer> vector_of_kmers;
+    // reads the input data
     while(stream.good() and outstream.good()) {
         // dont use !stream.eof() because it won't reach
         // the endOfFile as long as we did not actually read it until
@@ -55,20 +72,37 @@ int main(int argc, char* argv[]) {
         std::string line_buffer;
         while(std::getline(stream, line_buffer).good()) {
             vector_of_kmers.push_back(process_line(line_buffer));
-            /*if (vector_of_unique_patterns.empty()) {
-                vector_of_unique_patterns.push_back(vector_of_kmers.end()->pattern);
-            } else {
-                for (auto &i : vector_of_unique_patterns) {
-                    if (i != vector_of_kmers.end()->pattern) {
-                        vector_of_unique_patterns.push_back(vector_of_kmers.end()->pattern);
-                    }
-                }
-            }*/
         }
     }
     stream.close();
 
-    //iterate with iterator on vectorOfKmer
+    // obtains a vector of unique patterns in the same order as the read order
+    // first we build a map: each kmer and its position in the original order, and the reverse (index to kmer)
+    std::vector<std::vector<int>> vector_of_unique_patterns ;
+    std::vector<int> index_vector;
+    auto comp = [](const Kmer& k1, const Kmer& k2){
+        return k1.pattern < k2.pattern || (k1.pattern == k2.pattern && k1.name < k2.name);
+    };
+    std::map<Kmer, int, decltype(comp)> kmers_to_index(comp);
+    std::map<int, Kmer> index_to_kmers;
+    for (int i = 0; i != vector_of_kmers.size(); i++) {
+        kmers_to_index.insert(std::pair<Kmer, int>(vector_of_kmers.at(i), i));
+        index_to_kmers.insert(std::pair<int, Kmer>(i, vector_of_kmers.at(i)));
+    }
+    // then we build an unsorted_set of the Kmers from the input:
+    std::unordered_set<Kmer, MyHashFunction> vector_set(vector_of_kmers.begin(), vector_of_kmers.end());
+    // builds index of original positions of the unique vectors
+    for (auto itr : vector_set) {
+        index_vector.push_back(kmers_to_index[itr]);
+    }
+    // sorts index vector to get the indexes in order
+    std::sort(index_vector.begin(), index_vector.end());
+    // populates the vector of unique presence/absence patterns :
+    for (int i = 0; i != index_vector.size(); i++) {
+        vector_of_unique_patterns.at(i) = index_to_kmers[index_vector.at(i)].pattern;
+    }
+
+    // iterates with iterator on vectorOfKmer
     outstream << "ps\t";
     outstream_unique << "ps\t";
     for (const Kmer &i : vector_of_kmers) {
@@ -79,23 +113,15 @@ int main(int argc, char* argv[]) {
     // gets the number of lines that will be written, which corresponds to the number of 0/1 in the vector pattern of the structures
     for (int i = 0; i < vector_of_kmers.at(1).pattern.size(); ++i) {
         outstream << i << "\t" ;
-        //go through the ieme values of each vector
+        // goes through the ieme values of each vector
         for (auto j: vector_of_kmers) {
             outstream << j.pattern.at(i) << "\t";
         }
         outstream << "\n" ;
     }
 
-    // builds a vector of unique patterns
-
-    for (const auto &i : vector_of_kmers) {
-        vector_of_unique_patterns.push_back(i.pattern);
-        std::sort(vector_of_unique_patterns.begin(), vector_of_unique_patterns.end());
-        std::unique(vector_of_unique_patterns.begin(), vector_of_unique_patterns.end());
-    }
-
     // gets the number of lines that will be written, which corresponds to the number of 0/1 in the pattern of each vector
-    // major diffference with above is that we iterate directly on the pattern vectors instead of the structures containing them
+    // major difference with above is that we iterate directly on the pattern vectors instead of the structures containing them
     for (int i = 0; i < vector_of_unique_patterns.at(1).size(); ++i) {
         outstream_unique << i << "\t" ;
         //go through the ieme values of each vector
