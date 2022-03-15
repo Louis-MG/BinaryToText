@@ -68,13 +68,14 @@ int main(int argc, char* argv[]) {
     std::vector<Kmer> vector_of_kmers;
     std::vector<std::vector<int>> vector_of_unique_patterns ;
     std::vector<std::string> filenames ;
+    std::vector<std::vector<int>> unique_to_all ;
     // reads the input data
     while(stream.good() and outstream.good()) {
         // dont use !stream.eof() because it won't reach
         // the endOfFile as long as we did not actually read it until
         //prepare the output file :
-        outstream << "ps\t";
-        outstream_unique << "ps\t";
+        outstream << "ps ";
+        outstream_unique << "ps ";
         // read the data line by line:
         std::string line_buffer;
         std::set<std::vector<int>> vector_set; //TODO: maybe use an unordered set with a custom hash function
@@ -90,8 +91,8 @@ int main(int argc, char* argv[]) {
                 filenames.erase(filenames.begin());
                 //write the header of both all_rows and all_rows_unique :
                 for (const std::string &i : filenames) {
-                    outstream << i << "\t";
-                    outstream_unique << i << "\t";
+                    outstream << i << " ";
+                    outstream_unique << i << " ";
                 }
                 outstream << "\n" ;
                 outstream_unique << "\n";
@@ -99,19 +100,29 @@ int main(int argc, char* argv[]) {
                 //we write the body:
                 Kmer data = process_line(line_buffer);
                 vector_of_kmers.push_back(data);
-                outstream << n << "\t" ;
+                outstream << n << " " ;
                 for (auto i : data.pattern) {
-                    outstream << i << "\t" ;
+                    outstream << i << " " ;
                 }
                 outstream << "\n" ;
-                n++;
                 // looks for the vector in the set (of unique vectors):
                 auto search = vector_set.find(data.pattern) ;
                 // if not found, adds it to the set and in the vector of unique vector
                 if (search == vector_set.end()) {
                     vector_of_unique_patterns.push_back(data.pattern);
                     vector_set.insert(data.pattern);
+                    unique_to_all.at(n).push_back();
+                } else {
+                    // build vector of vectors containing the ids (aka n) of the vectors the unique pattern represents :
+                    // ex: 1st unique pattern also represents the third and tenth vectors, the second represents 8th and 9th :
+                    // 1 3 10
+                    // 2 8 9
+                    auto itr = find(vector_of_unique_patterns.begin(), vector_of_unique_patterns.end(), data.pattern);
+
+                    //add n to the item (vector) pointed out above
+
                 }
+                n++;
             }
         }
     }
@@ -121,9 +132,9 @@ int main(int argc, char* argv[]) {
     // major difference with above is that we iterate directly on the pattern vectors instead of the structures containing them
     int n = 0;
     for (auto i : vector_of_unique_patterns) {
-        outstream_unique << n << "\t";
+        outstream_unique << n << " ";
         for (auto j : i) {
-            outstream_unique << j << "\t" ;
+            outstream_unique << j << " " ;
         }
         outstream_unique << "\n" ;
     }
