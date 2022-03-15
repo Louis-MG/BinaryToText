@@ -67,59 +67,65 @@ int main(int argc, char* argv[]) {
 
     std::vector<Kmer> vector_of_kmers;
     std::vector<std::vector<int>> vector_of_unique_patterns ;
+    std::vector<std::string> filenames ;
     // reads the input data
     while(stream.good() and outstream.good()) {
         // dont use !stream.eof() because it won't reach
         // the endOfFile as long as we did not actually read it until
+        //prepare the output file :
+        outstream << "ps\t";
+        outstream_unique << "ps\t";
         // read the data line by line:
         std::string line_buffer;
-        std::set<std::vector<int>> vector_set; //TODO: maybe use an unordered set with a custom hash funciton
+        std::set<std::vector<int>> vector_set; //TODO: maybe use an unordered set with a custom hash function
+        int n = 0; // line counter
         while(std::getline(stream, line_buffer).good()) {
-            Kmer data = process_line(line_buffer);
-            vector_of_kmers.push_back(data);
-            // looks for the vector in the set (of unique vectors):
-            auto search = vector_set.find(data.pattern) ;
-            // if not found, adds it to the set and in the vector of unique vector
-            if (search == vector_set.end()) {
-                vector_of_unique_patterns.push_back(data.pattern);
-                vector_set.insert(data.pattern);
+            if (line_buffer.starts_with("query")) {
+                // we obtain the file names and store them:
+                std::istringstream input(line_buffer);
+                for (std::string word; std::getline(input, word, '\t'); ) {
+                    filenames.push_back(word);
+                }
+                //write the header of both all_rows and all_rows_unique :
+                for (const std::string &i : filenames) {
+                    outstream << i << "\t";
+                    outstream_unique << i << "\t";
+                }
+                outstream << "\n" ;
+                outstream_unique << "\n";
+            } else {
+                //we write the body:
+                Kmer data = process_line(line_buffer);
+                vector_of_kmers.push_back(data);
+                outstream << n << "\t" ;
+                for (auto i : data.pattern) {
+                    outstream << i << "\t" ;
+                }
+                outstream << "\n" ;
+                n++;
+                // looks for the vector in the set (of unique vectors):
+                auto search = vector_set.find(data.pattern) ;
+                // if not found, adds it to the set and in the vector of unique vector
+                if (search == vector_set.end()) {
+                    vector_of_unique_patterns.push_back(data.pattern);
+                    vector_set.insert(data.pattern);
+                }
             }
         }
     }
     stream.close();
-
-
-    // iterates with iterator on vector_of_kmers
-    outstream << "ps\t";
-    outstream_unique << "ps\t";
-    for (const Kmer &i : vector_of_kmers) {
-        outstream << i.name << "\t";
-        outstream_unique << i.name << "\t";
-    }
-    outstream << "\n" ;
-    outstream_unique << "\n";
-    // gets the number of lines that will be written, which corresponds to the number of 0/1 in the vector pattern of the structures
-    for (int i = 0; i < vector_of_kmers.at(1).pattern.size(); ++i) {
-        outstream << i << "\t" ;
-        // goes through the ieme values of each vector
-        for (auto j: vector_of_kmers) {
-            outstream << j.pattern.at(i) << "\t";
-        }
-        outstream << "\n" ;
-    }
-
+    outstream.close();
     // gets the number of lines that will be written, which corresponds to the number of 0/1 in the pattern of each vector
     // major difference with above is that we iterate directly on the pattern vectors instead of the structures containing them
-    for (int i = 0; i < vector_of_unique_patterns.at(1).size(); ++i) {
-        outstream_unique << i << "\t" ;
-        //go through the ieme values of each vector
-        for (auto j: vector_of_unique_patterns) {
-            outstream_unique << j.at(i) << "\t";
+    int n = 0;
+    for (auto i : vector_of_unique_patterns) {
+        outstream_unique << n << "\t";
+        for (auto j : i) {
+            outstream_unique << j << "\t" ;
         }
         outstream_unique << "\n" ;
     }
-    outstream_unique.close() ;
-    outstream.close();
+    outstream_unique.close();
 
     //finishing measuring time
     auto t2 = std::chrono::high_resolution_clock::now();
