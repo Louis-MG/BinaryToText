@@ -86,6 +86,8 @@ int main(int argc, char* argv[]) {
                 for (std::string word; std::getline(input, word, '\t'); ) {
                     filenames.push_back(word);
                 }
+                //removes "query"
+                filenames.erase(filenames.begin());
                 //write the header of both all_rows and all_rows_unique :
                 for (const std::string &i : filenames) {
                     outstream << i << "\t";
