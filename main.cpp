@@ -73,11 +73,11 @@ int main(int argc, char* argv[]) {
         // the endOfFile as long as we did not actually read it until
         // read the data line by line:
         std::string line_buffer;
-        std::set<std::vector<int>> vector_set; //
+        std::set<std::vector<int>> vector_set; //TODO: maybe use an unordered set with a custom hash funciton
         while(std::getline(stream, line_buffer).good()) {
             Kmer data = process_line(line_buffer);
             vector_of_kmers.push_back(data);
-            // looks for the vector in the unique set :
+            // looks for the vector in the set (of unique vectors):
             auto search = vector_set.find(data.pattern) ;
             // if not found, adds it to the set and in the vector of unique vector
             if (search == vector_set.end()) {
@@ -87,32 +87,7 @@ int main(int argc, char* argv[]) {
         }
     }
     stream.close();
-/*
-    // obtains a vector of unique patterns in the same order as the read order
-    // first we build a map: each kmer and its position in the original order, and the reverse (index to kmer)
-    std::vector<std::vector<int>> vector_of_unique_patterns ;
-    std::vector<int> index_vector;
-    auto comp = [](const Kmer& k1, const Kmer& k2){
-        return k1.pattern < k2.pattern || (k1.pattern == k2.pattern && k1.name < k2.name);
-    };
-    std::unordered_map<Kmer, int, decltype(comp)> kmers_to_index(comp);
-    std::unordered_map<int, Kmer> index_to_kmers;
-    for (int i = 0; i != vector_of_kmers.size(); i++) {
-        kmers_to_index.insert(std::pair<Kmer, int>(vector_of_kmers.at(i), i));
-        index_to_kmers.insert(std::pair<int, Kmer>(i, vector_of_kmers.at(i)));
-    }
-    // then we build an unsorted_set of the Kmers from the input:
-    std::unordered_set<Kmer, MyHashFunction> vector_set(vector_of_kmers.begin(), vector_of_kmers.end());
-    // builds index of original positions of the unique vectors
-    for (auto itr : vector_set) {
-        index_vector.push_back(kmers_to_index[itr]);
-    }
-    // sorts index vector to get the indexes in order
-    std::sort(index_vector.begin(), index_vector.end());
-    // populates the vector of unique presence/absence patterns :
-    for (int i = 0; i != index_vector.size(); i++) {
-        vector_of_unique_patterns.at(i) = index_to_kmers[index_vector.at(i)].pattern;
-    }*/
+
 
     // iterates with iterator on vector_of_kmers
     outstream << "ps\t";
@@ -122,6 +97,7 @@ int main(int argc, char* argv[]) {
         outstream_unique << i.name << "\t";
     }
     outstream << "\n" ;
+    outstream_unique << "\n";
     // gets the number of lines that will be written, which corresponds to the number of 0/1 in the vector pattern of the structures
     for (int i = 0; i < vector_of_kmers.at(1).pattern.size(); ++i) {
         outstream << i << "\t" ;
