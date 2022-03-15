@@ -4,18 +4,20 @@
 #include <sstream>
 #include <chrono>
 #include <vector>
-#include <map>
-#include <unordered_set>
+#include <set>
 
 //this struct contains the name of a kmer, and pattern is a vector of its absence/presence
 struct Kmer {
     std::string name;
     std::vector<int> pattern;
     // This function is used by unordered_set to compare
-    // elements of Kmer.
-    bool operator==(const Kmer& K) const
-    {
+    // Kmers using patterns.
+    bool operator==(const Kmer& K) const {
         return (this->pattern == K.pattern);
+    }
+
+    bool operator<(const Kmer &K) const {
+        return (this->pattern < K.pattern);
     }
 };
 
@@ -64,18 +66,28 @@ int main(int argc, char* argv[]) {
     }
 
     std::vector<Kmer> vector_of_kmers;
+    std::vector<std::vector<int>> vector_of_unique_patterns ;
     // reads the input data
     while(stream.good() and outstream.good()) {
         // dont use !stream.eof() because it won't reach
         // the endOfFile as long as we did not actually read it until
         // read the data line by line:
         std::string line_buffer;
+        std::set<std::vector<int>> vector_set; //
         while(std::getline(stream, line_buffer).good()) {
-            vector_of_kmers.push_back(process_line(line_buffer));
+            Kmer data = process_line(line_buffer);
+            vector_of_kmers.push_back(data);
+            // looks for the vector in the unique set :
+            auto search = vector_set.find(data.pattern) ;
+            // if not found, adds it to the set and in the vector of unique vector
+            if (search == vector_set.end()) {
+                vector_of_unique_patterns.push_back(data.pattern);
+                vector_set.insert(data.pattern);
+            }
         }
     }
     stream.close();
-
+/*
     // obtains a vector of unique patterns in the same order as the read order
     // first we build a map: each kmer and its position in the original order, and the reverse (index to kmer)
     std::vector<std::vector<int>> vector_of_unique_patterns ;
@@ -83,8 +95,8 @@ int main(int argc, char* argv[]) {
     auto comp = [](const Kmer& k1, const Kmer& k2){
         return k1.pattern < k2.pattern || (k1.pattern == k2.pattern && k1.name < k2.name);
     };
-    std::map<Kmer, int, decltype(comp)> kmers_to_index(comp);
-    std::map<int, Kmer> index_to_kmers;
+    std::unordered_map<Kmer, int, decltype(comp)> kmers_to_index(comp);
+    std::unordered_map<int, Kmer> index_to_kmers;
     for (int i = 0; i != vector_of_kmers.size(); i++) {
         kmers_to_index.insert(std::pair<Kmer, int>(vector_of_kmers.at(i), i));
         index_to_kmers.insert(std::pair<int, Kmer>(i, vector_of_kmers.at(i)));
@@ -100,9 +112,9 @@ int main(int argc, char* argv[]) {
     // populates the vector of unique presence/absence patterns :
     for (int i = 0; i != index_vector.size(); i++) {
         vector_of_unique_patterns.at(i) = index_to_kmers[index_vector.at(i)].pattern;
-    }
+    }*/
 
-    // iterates with iterator on vectorOfKmer
+    // iterates with iterator on vector_of_kmers
     outstream << "ps\t";
     outstream_unique << "ps\t";
     for (const Kmer &i : vector_of_kmers) {
