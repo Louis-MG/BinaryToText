@@ -184,12 +184,12 @@ void write_uniques(const std::vector<std::vector<int>>& vector_of_unique_pattern
         outstream_unique << n << " ";
         for (const auto &j : i) {
             outstream_unique << j << " " ;
-            outstream_gemma_unitig_to_patterns << j << " " << n << "\n";
         }
         outstream_unique << "\n" ;
         //writes connection between unique pattern and all the unitigs each represents
         for (const auto &j : map_unique_to_all[i]) {
             outstream_unique_to_all << j << " ";
+            outstream_gemma_unitig_to_patterns << j << " " << n << "\n";
         }
         outstream_unique_to_all << "\n" ;
 
