@@ -11,15 +11,6 @@
 struct Kmer {
     std::string name;
     std::vector<int> pattern;
-    // This function is used by unordered_set to compare
-    // Kmers using patterns.
-    bool operator==(const Kmer& K) const {
-        return (this->pattern == K.pattern);
-    }
-
-    bool operator<(const Kmer &K) const {
-        return (this->pattern < K.pattern);
-    }
 };
 
 
@@ -29,7 +20,7 @@ void write_uniques(const std::vector<std::vector<int>>& vector_of_unique_pattern
 
 int main(int argc, char* argv[]) {
     if (argc != 3) {
-        std::cerr << "ERROR: usage : ./BinaryToText input.txt output.txt" << std::endl;
+        std::cerr << "ERROR: usage : ./BinaryToText input.txt output.binary" << std::endl;
         exit(1);
     }
 
@@ -54,6 +45,7 @@ int main(int argc, char* argv[]) {
         std::exit(1);
     }
 
+    // variables
     std::vector<Kmer> vector_of_kmers;
     std::vector<std::vector<int>> vector_of_unique_patterns ;
     std::vector<std::string> filenames ;
@@ -77,15 +69,15 @@ int main(int argc, char* argv[]) {
                 for (std::string word; std::getline(input, word, '\t'); ) {
                     filenames.push_back(word);
                 }
-                //removes "query"
+                // removes "query"
                 filenames.erase(filenames.begin());
-                //write the header of both all_rows and all_rows_unique :
+                // write the header of both all_rows and all_rows_unique :
                 for (const std::string &i : filenames) {
                     outstream << i << " ";
                 }
                 outstream << "\n" ;
             } else {
-                //we write the body:
+                // we write the body:
                 Kmer data = process_line(line_buffer);
                 vector_of_kmers.push_back(data);
                 outstream << n << " " ;
@@ -104,7 +96,7 @@ int main(int argc, char* argv[]) {
                     map_unique_to_all.insert({data.pattern, unitigs});
                 } else {
                     map_unique_to_all[data.pattern].push_back(n);
-                    //add n to the item (vector) pointed out above
+                    // add n to the item (vector) pointed out above
                 }
                 n++;
             }
@@ -113,10 +105,10 @@ int main(int argc, char* argv[]) {
     stream.close();
     outstream.close();
 
-    //writes uniques and unique_to_all, gemma unique patterns to nb unitigs outputs
+    // writes uniques and unique_to_all, gemma unique patterns to nb unitigs outputs
     write_uniques(vector_of_unique_patterns, rawname, filenames, map_unique_to_all);
 
-    //finishing measuring time
+    // finishing measuring time
     auto t2 = std::chrono::high_resolution_clock::now();
     auto ms_int = std::chrono::duration_cast<std::chrono::minutes>(t2 - t1);
     std::cout << "Conversion took " << ms_int.count() << "min\n";
@@ -141,19 +133,19 @@ Kmer process_line(const std::string& line_buffer) {
             output_pattern.push_back(1); // if abundance is anything else than 0
         }
     }
-    //Kmer output_struct{kmer_name, output_pattern};
-    //output_pattern.clear();
+    // Kmer output_struct{kmer_name, output_pattern};
+    // output_pattern.clear();
     return {kmer_name, output_pattern};
 }
 
 void write_uniques(const std::vector<std::vector<int>>& vector_of_unique_patterns, std::string& rawname, std::vector<std::string>& filenames, std::map<std::vector<int>, std::vector<int>>& map_unique_to_all) {
     /*
-     * this function builds output files : unique_patterns, unique_to_all, and gemma_pattern_to_nbunitigs.
+     * this function builds output files : unique_patterns, unique_to_all, and gemma_pattern_to_nb_unitigs, gemma_unitig_to_patterns.
      */
-    std::ofstream outstream_unique (rawname+"_unique.txt", std::ofstream::binary);
-    std::ofstream outstream_unique_to_all (rawname+"_unique_to_all.txt", std::ofstream::binary);
-    std::ofstream outstream_gemma_pattern_to_nb_unitigs (rawname + "_gemma_pattern_to_unitigs", std::ofstream::binary);
-    std::ofstream outstream_gemma_unitig_to_patterns (rawname + "_gemma_unitigs_to_patterns", std::ofstream::binary);
+    std::ofstream outstream_unique (rawname+"_unique.binary", std::ofstream::binary);
+    std::ofstream outstream_unique_to_all (rawname+"_unique_to_all.binary", std::ofstream::binary);
+    std::ofstream outstream_gemma_pattern_to_nb_unitigs (rawname + "_gemma_pattern_to_unitigs.binary", std::ofstream::binary);
+    std::ofstream outstream_gemma_unitig_to_patterns (rawname + "_gemma_unitigs_to_patterns.binary", std::ofstream::binary);
 
 
     //error check
@@ -173,7 +165,7 @@ void write_uniques(const std::vector<std::vector<int>>& vector_of_unique_pattern
 
     //TODO: check that my understanding of the output files is good
 
-    // header
+    // header for unique_pattern
     outstream_unique << "ps ";
     for (const std::string &i : filenames) {
         outstream_unique << i << " ";
@@ -182,20 +174,20 @@ void write_uniques(const std::vector<std::vector<int>>& vector_of_unique_pattern
 
     int n = 0;
     for (const auto &i : vector_of_unique_patterns) {
-        //writes the unique patterns in their file
+        // writes the unique patterns in their file
         outstream_unique << n << " ";
         for (const auto &j : i) {
             outstream_unique << j << " " ;
         }
         outstream_unique << "\n" ;
-        //writes connection between unique pattern and all the unitigs each represents
+        // writes connection between unique pattern and all the unitigs each represents in unique_to_all, and the reciprocal in unitig_to_pattern
         for (const auto &j : map_unique_to_all[i]) {
             outstream_unique_to_all << j << " ";
             outstream_gemma_unitig_to_patterns << j << " " << n << "\n";
         }
         outstream_unique_to_all << "\n" ;
 
-        //writes the reference number of unique pattern in unique
+        // writes the number of unitigs that each unique pattern represents
         outstream_gemma_pattern_to_nb_unitigs << n << " " << map_unique_to_all[i].size() << "\n";
 
         n++;
