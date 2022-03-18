@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) {
 
         // read the data line by line:
         std::string line_buffer;
-        std::set<std::vector<int>> vector_set; //TODO: maybe use an unordered set with a custom hash function
+        std::set<std::vector<int>> vector_set;
         int n = 0; // line counter
         while(std::getline(stream, line_buffer).good()) {
             if (line_buffer.starts_with("query")) {
@@ -167,9 +167,11 @@ void write_uniques(const std::vector<std::vector<int>>& vector_of_unique_pattern
         perror("ERROR: could not open output_gemma_pattern_to_unitigs file");
         std::exit(1);
     } else if (outstream_gemma_unitig_to_patterns.fail()) {
-        perror("ERROR: could not open output_gemma_pattern_to_unitigs file");
+        perror("ERROR: could not open output_gemma_unitig_to_patterns file");
         std::exit(1);
     }
+
+    //TODO: check that my understanding of the output files is good
 
     // header
     outstream_unique << "ps ";
@@ -201,4 +203,5 @@ void write_uniques(const std::vector<std::vector<int>>& vector_of_unique_pattern
     outstream_unique.close();
     outstream_unique_to_all.close();
     outstream_gemma_pattern_to_nb_unitigs.close();
+    outstream_gemma_unitig_to_patterns.close();
 }
