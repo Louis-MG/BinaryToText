@@ -152,7 +152,9 @@ void write_uniques(const std::vector<std::vector<int>>& vector_of_unique_pattern
      */
     std::ofstream outstream_unique (rawname+"_unique.txt", std::ofstream::binary);
     std::ofstream outstream_unique_to_all (rawname+"_unique_to_all.txt", std::ofstream::binary);
-    std::ofstream outstream_gemma_nbunitigs (rawname + "_gemma_pattern_to_unitigs", std::ofstream::binary);
+    std::ofstream outstream_gemma_pattern_to_nb_unitigs (rawname + "_gemma_pattern_to_unitigs", std::ofstream::binary);
+    std::ofstream outstream_gemma_unitig_to_patterns (rawname + "_gemma_unitigs_to_patterns", std::ofstream::binary);
+
 
     //error check
     if (outstream_unique.fail()) {
@@ -161,7 +163,10 @@ void write_uniques(const std::vector<std::vector<int>>& vector_of_unique_pattern
     } else if (outstream_unique_to_all.fail()) {
         perror("ERROR: could not open output_unique_to_all file");
         std::exit(1);
-    } else if (outstream_gemma_nbunitigs.fail()) {
+    } else if (outstream_gemma_pattern_to_nb_unitigs.fail()) {
+        perror("ERROR: could not open output_gemma_pattern_to_unitigs file");
+        std::exit(1);
+    } else if (outstream_gemma_unitig_to_patterns.fail()) {
         perror("ERROR: could not open output_gemma_pattern_to_unitigs file");
         std::exit(1);
     }
@@ -179,6 +184,7 @@ void write_uniques(const std::vector<std::vector<int>>& vector_of_unique_pattern
         outstream_unique << n << " ";
         for (const auto &j : i) {
             outstream_unique << j << " " ;
+            outstream_gemma_unitig_to_patterns << j << " " << n << "\n";
         }
         outstream_unique << "\n" ;
         //writes connection between unique pattern and all the unitigs each represents
@@ -188,11 +194,11 @@ void write_uniques(const std::vector<std::vector<int>>& vector_of_unique_pattern
         outstream_unique_to_all << "\n" ;
 
         //writes the reference number of unique pattern in unique
-        outstream_gemma_nbunitigs << n << map_unique_to_all[i].size() << "\n";
+        outstream_gemma_pattern_to_nb_unitigs << n << " " << map_unique_to_all[i].size() << "\n";
 
         n++;
     }
     outstream_unique.close();
     outstream_unique_to_all.close();
-    outstream_gemma_nbunitigs.close();
+    outstream_gemma_pattern_to_nb_unitigs.close();
 }
