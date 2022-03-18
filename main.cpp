@@ -99,16 +99,11 @@ int main(int argc, char* argv[]) {
                 if (search == vector_set.end()) {
                     vector_of_unique_patterns.push_back(data.pattern);
                     vector_set.insert(data.pattern);
-                    map_unique_to_all[data.pattern];
+                    std::vector<int> unitigs;
+                    unitigs.push_back(n);
+                    map_unique_to_all.insert({data.pattern, unitigs});
                 } else {
-                    // build vector of vectors containing the ids (aka n) of the vectors the unique pattern represents :
-                    // ex: 1st unique pattern also represents the third and tenth vectors, the second represents 8th and 9th :
-                    // 1 3 10
-                    // 2 8 9
-                    std::vector tmp = map_unique_to_all[data.pattern] ;
-                    tmp.push_back(n);
-                    auto itr = map_unique_to_all.find(data.pattern);
-                    itr->second = tmp;
+                    map_unique_to_all[data.pattern].push_back(n);
                     //add n to the item (vector) pointed out above
                 }
                 n++;
@@ -157,7 +152,7 @@ void write_uniques(const std::vector<std::vector<int>>& vector_of_unique_pattern
      */
     std::ofstream outstream_unique (rawname+"_unique.txt", std::ofstream::binary);
     std::ofstream outstream_unique_to_all (rawname+"_unique_to_all.txt", std::ofstream::binary);
-    std::ofstream outstream_gemma_nbunitigs (rawname + "gemma_pattern_to_unitigs", std::ofstream::binary);
+    std::ofstream outstream_gemma_nbunitigs (rawname + "_gemma_pattern_to_unitigs", std::ofstream::binary);
 
     //error check
     if (outstream_unique.fail()) {
