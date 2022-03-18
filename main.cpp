@@ -5,6 +5,7 @@
 #include <chrono>
 #include <vector>
 #include <set>
+#include <map>
 
 //this struct contains the name of a kmer, and pattern is a vector of its absence/presence
 struct Kmer {
@@ -21,18 +22,10 @@ struct Kmer {
     }
 };
 
-// class for hash function
-class MyHashFunction {
-public:
-    // pattern is returned as hash function
-    std::vector<int> operator()(const Kmer& K) const
-    {
-        return K.pattern;
-    }
-};
 
-// declaration
+// declarations
 Kmer process_line(const std::string& line_buffer);
+void write_uniques(const std::vector<std::vector<int>>& vector_of_unique_patterns, std::string& rawname, std::vector<std::string>& filenames, std::map<std::vector<int>, std::vector<int>>& map_unique_to_all);
 
 int main(int argc, char* argv[]) {
     if (argc != 3) {
@@ -50,7 +43,6 @@ int main(int argc, char* argv[]) {
     std::ofstream outstream (output, std::ofstream::binary);
     size_t lastindex = output.find_last_of(".");
     std::string rawname = output.substr(0, lastindex);
-    std::ofstream outstream_unique (rawname+"_unique.txt", std::ofstream::binary);
     // must use stream.fail() with a switch case to now if the thing went fine : no
     // file operation causes C++ to stop.
     // see https://www.eecs.umich.edu/courses/eecs380/HANDOUTS/cppBinaryFileIO-2.html
@@ -60,22 +52,20 @@ int main(int argc, char* argv[]) {
     } else if (outstream.fail()) {
         perror("ERROR: could not open output file");
         std::exit(1);
-    } else if (outstream_unique.fail()) {
-        perror("ERROR: could not open output_unique file");
-        std::exit(1);
     }
 
     std::vector<Kmer> vector_of_kmers;
     std::vector<std::vector<int>> vector_of_unique_patterns ;
     std::vector<std::string> filenames ;
     std::vector<std::vector<int>> unique_to_all ;
+    std::map<std::vector<int>, std::vector<int>> map_unique_to_all ; //each time a unique is accountered, insert the pattern as a key and the n in the vector of values
     // reads the input data
     while(stream.good() and outstream.good()) {
         // dont use !stream.eof() because it won't reach
         // the endOfFile as long as we did not actually read it until
         //prepare the output file :
         outstream << "ps ";
-        outstream_unique << "ps ";
+
         // read the data line by line:
         std::string line_buffer;
         std::set<std::vector<int>> vector_set; //TODO: maybe use an unordered set with a custom hash function
@@ -92,16 +82,14 @@ int main(int argc, char* argv[]) {
                 //write the header of both all_rows and all_rows_unique :
                 for (const std::string &i : filenames) {
                     outstream << i << " ";
-                    outstream_unique << i << " ";
                 }
                 outstream << "\n" ;
-                outstream_unique << "\n";
             } else {
                 //we write the body:
                 Kmer data = process_line(line_buffer);
                 vector_of_kmers.push_back(data);
                 outstream << n << " " ;
-                for (auto i : data.pattern) {
+                for (const auto &i : data.pattern) {
                     outstream << i << " " ;
                 }
                 outstream << "\n" ;
@@ -111,16 +99,17 @@ int main(int argc, char* argv[]) {
                 if (search == vector_set.end()) {
                     vector_of_unique_patterns.push_back(data.pattern);
                     vector_set.insert(data.pattern);
-                    unique_to_all.at(n).push_back();
+                    map_unique_to_all[data.pattern];
                 } else {
                     // build vector of vectors containing the ids (aka n) of the vectors the unique pattern represents :
                     // ex: 1st unique pattern also represents the third and tenth vectors, the second represents 8th and 9th :
                     // 1 3 10
                     // 2 8 9
-                    auto itr = find(vector_of_unique_patterns.begin(), vector_of_unique_patterns.end(), data.pattern);
-
+                    std::vector tmp = map_unique_to_all[data.pattern] ;
+                    tmp.push_back(n);
+                    auto itr = map_unique_to_all.find(data.pattern);
+                    itr->second = tmp;
                     //add n to the item (vector) pointed out above
-
                 }
                 n++;
             }
@@ -128,17 +117,9 @@ int main(int argc, char* argv[]) {
     }
     stream.close();
     outstream.close();
-    // gets the number of lines that will be written, which corresponds to the number of 0/1 in the pattern of each vector
-    // major difference with above is that we iterate directly on the pattern vectors instead of the structures containing them
-    int n = 0;
-    for (auto i : vector_of_unique_patterns) {
-        outstream_unique << n << " ";
-        for (auto j : i) {
-            outstream_unique << j << " " ;
-        }
-        outstream_unique << "\n" ;
-    }
-    outstream_unique.close();
+
+    //writes uniques and unique_to_all, gemma unique patterns to nb unitigs outputs
+    write_uniques(vector_of_unique_patterns, rawname, filenames, map_unique_to_all);
 
     //finishing measuring time
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -168,4 +149,55 @@ Kmer process_line(const std::string& line_buffer) {
     //Kmer output_struct{kmer_name, output_pattern};
     //output_pattern.clear();
     return {kmer_name, output_pattern};
+}
+
+void write_uniques(const std::vector<std::vector<int>>& vector_of_unique_patterns, std::string& rawname, std::vector<std::string>& filenames, std::map<std::vector<int>, std::vector<int>>& map_unique_to_all) {
+    /*
+     * this function builds output files : unique_patterns, unique_to_all, and gemma_pattern_to_nbunitigs.
+     */
+    std::ofstream outstream_unique (rawname+"_unique.txt", std::ofstream::binary);
+    std::ofstream outstream_unique_to_all (rawname+"_unique_to_all.txt", std::ofstream::binary);
+    std::ofstream outstream_gemma_nbunitigs (rawname + "gemma_pattern_to_unitigs", std::ofstream::binary);
+
+    //error check
+    if (outstream_unique.fail()) {
+        perror("ERROR: could not open output_unique file");
+        std::exit(1);
+    } else if (outstream_unique_to_all.fail()) {
+        perror("ERROR: could not open output_unique_to_all file");
+        std::exit(1);
+    } else if (outstream_gemma_nbunitigs.fail()) {
+        perror("ERROR: could not open output_gemma_pattern_to_unitigs file");
+        std::exit(1);
+    }
+
+    // header
+    outstream_unique << "ps ";
+    for (const std::string &i : filenames) {
+        outstream_unique << i << " ";
+    }
+    outstream_unique << "\n";
+
+    int n = 0;
+    for (const auto &i : vector_of_unique_patterns) {
+        //writes the unique patterns in their file
+        outstream_unique << n << " ";
+        for (const auto &j : i) {
+            outstream_unique << j << " " ;
+        }
+        outstream_unique << "\n" ;
+        //writes connection between unique pattern and all the unitigs each represents
+        for (const auto &j : map_unique_to_all[i]) {
+            outstream_unique_to_all << j << " ";
+        }
+        outstream_unique_to_all << "\n" ;
+
+        //writes the reference number of unique pattern in unique
+        outstream_gemma_nbunitigs << n << map_unique_to_all[i].size() << "\n";
+
+        n++;
+    }
+    outstream_unique.close();
+    outstream_unique_to_all.close();
+    outstream_gemma_nbunitigs.close();
 }
