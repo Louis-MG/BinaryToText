@@ -166,6 +166,7 @@ Kmer minor_allele_description(Kmer data) {
             }
         }
         data.corrected = -1;
+        data.pattern = corr_vector;
     } else {
         data.corrected = 1;
     }
