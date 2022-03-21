@@ -11,12 +11,14 @@
 struct Kmer {
     std::string name;
     std::vector<int> pattern;
+    int corrected;
 };
 
 
 // declarations
 Kmer process_line(const std::string& line_buffer);
 void write_uniques(const std::vector<std::vector<int>>& vector_of_unique_patterns, std::string& rawname, std::vector<std::string>& filenames, std::map<std::vector<int>, std::vector<int>>& map_unique_to_all);
+Kmer minor_allele_description(Kmer data);
 
 int main(int argc, char* argv[]) {
     if (argc != 3) {
@@ -30,8 +32,11 @@ int main(int argc, char* argv[]) {
     std::cout << "Starting conversion of abundance matrix to presence/absence matrix ..." << std::endl;
     std::string matrix = argv[1]; //input abundance matrix
     std::string output = argv[2]; //output presence/absence matrix
+    // streams
     std::ifstream stream (matrix, std::ifstream::binary);
     std::ofstream outstream (output, std::ofstream::binary);
+    std::ofstream weight_corr_track ("weight_correction", std::ofstream::binary);
+    // other files names prefix
     size_t lastindex = output.find_last_of(".");
     std::string rawname = output.substr(0, lastindex);
     // must use stream.fail() with a switch case to now if the thing went fine : no
@@ -54,8 +59,8 @@ int main(int argc, char* argv[]) {
     // reads the input data
     while(stream.good() and outstream.good()) {
         // dont use !stream.eof() because it won't reach
-        // the endOfFile as long as we did not actually read it until
-        //prepare the output file :
+        // the endOfFile as long as we did not actually read it
+        // prepare the output file :
         outstream << "ps ";
 
         // read the data line by line:
@@ -78,7 +83,13 @@ int main(int argc, char* argv[]) {
                 outstream << "\n" ;
             } else {
                 // we write the body:
-                Kmer data = process_line(line_buffer);
+                // 1: parse the line and build the Kmer
+                Kmer raw_data = process_line(line_buffer);
+                // 2: change, if needed, the allele description of the Kmer
+                Kmer data = minor_allele_description(raw_data);
+                // 3: keep track of the change in allele description
+                weight_corr_track << data.corrected << "\n";
+                // next
                 vector_of_kmers.push_back(data);
                 outstream << n << " " ;
                 for (const auto &i : data.pattern) {
@@ -104,6 +115,7 @@ int main(int argc, char* argv[]) {
     }
     stream.close();
     outstream.close();
+    weight_corr_track.close();
 
     // writes uniques and unique_to_all, gemma unique patterns to nb unitigs outputs
     write_uniques(vector_of_unique_patterns, rawname, filenames, map_unique_to_all);
@@ -136,6 +148,31 @@ Kmer process_line(const std::string& line_buffer) {
     // Kmer output_struct{kmer_name, output_pattern};
     // output_pattern.clear();
     return {kmer_name, output_pattern};
+}
+
+Kmer minor_allele_description(Kmer data) {
+    /*
+     * this function changes the pattern of presence/absence of a Kmer into the minor allele description if needed, and
+     */
+    int sum ;
+    std::vector<int> corr_vector;
+    for (auto& n : data.pattern) {
+        sum += n;
+    }
+    if (sum/data.pattern.size() > 0.5) {
+        for (auto& n : data.pattern) {
+            switch (n) {
+                case 0:
+                    corr_vector.push_back(1);
+                case 1:
+                    corr_vector.push_back(0);
+            }
+        }
+        data.corrected = -1;
+    } else {
+        data.corrected = 1;
+    }
+    return data;
 }
 
 void write_uniques(const std::vector<std::vector<int>>& vector_of_unique_patterns, std::string& rawname, std::vector<std::string>& filenames, std::map<std::vector<int>, std::vector<int>>& map_unique_to_all) {
