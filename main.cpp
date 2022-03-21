@@ -17,7 +17,7 @@ struct Kmer {
 
 // declarations
 Kmer process_line(const std::string& line_buffer);
-void write_uniques(const std::vector<std::vector<int>>& vector_of_unique_patterns, std::string& rawname, std::vector<std::string>& filenames, std::map<std::vector<int>, std::vector<int>>& map_unique_to_all);
+void write_bugwas_gemma(const std::vector<std::vector<int>>& vector_of_unique_patterns, std::string& rawname, std::vector<std::string>& filenames, std::map<std::vector<int>, std::vector<int>>& map_unique_to_all);
 Kmer minor_allele_description(Kmer data);
 
 int main(int argc, char* argv[]) {
@@ -48,6 +48,9 @@ int main(int argc, char* argv[]) {
     } else if (outstream.fail()) {
         perror("ERROR: could not open output file");
         std::exit(1);
+    } else if (weight_corr_track.fail()) {
+        perror("ERROR: could not open weight_correction output file");
+        std::exit(1);
     }
 
     // variables
@@ -57,60 +60,53 @@ int main(int argc, char* argv[]) {
     std::vector<std::vector<int>> unique_to_all ;
     std::map<std::vector<int>, std::vector<int>> map_unique_to_all ; //each time a unique is accountered, insert the pattern as a key and the n in the vector of values
     // reads the input data
-    while(stream.good() and outstream.good()) {
-        // dont use !stream.eof() because it won't reach
-        // the endOfFile as long as we did not actually read it
-        // prepare the output file :
-        outstream << "ps ";
-
-        // read the data line by line:
-        std::string line_buffer;
-        std::set<std::vector<int>> vector_set;
-        int n = 0; // line counter
-        while(std::getline(stream, line_buffer).good()) {
-            if (line_buffer.starts_with("query")) {
-                // we obtain the file names and store them:
-                std::istringstream input(line_buffer);
-                for (std::string word; std::getline(input, word, '\t'); ) {
-                    filenames.push_back(word);
-                }
-                // removes "query"
-                filenames.erase(filenames.begin());
-                // write the header of both all_rows and all_rows_unique :
-                for (const std::string &i : filenames) {
-                    outstream << i << " ";
-                }
-                outstream << "\n" ;
-            } else {
-                // we write the body:
-                // 1: parse the line and build the Kmer
-                Kmer raw_data = process_line(line_buffer);
-                // 2: change, if needed, the allele description of the Kmer
-                Kmer data = minor_allele_description(raw_data);
-                // 3: keep track of the change in allele description
-                weight_corr_track << data.corrected << "\n";
-                // next
-                vector_of_kmers.push_back(data);
-                outstream << n << " " ;
-                for (const auto &i : data.pattern) {
-                    outstream << i << " " ;
-                }
-                outstream << "\n" ;
-                // looks for the vector in the set (of unique vectors):
-                auto search = vector_set.find(data.pattern) ;
-                // if not found, adds it to the set and in the vector of unique vector
-                if (search == vector_set.end()) {
-                    vector_of_unique_patterns.push_back(data.pattern);
-                    vector_set.insert(data.pattern);
-                    std::vector<int> unitigs;
-                    unitigs.push_back(n);
-                    map_unique_to_all.insert({data.pattern, unitigs});
-                } else {
-                    map_unique_to_all[data.pattern].push_back(n);
-                    // add n to the item (vector) pointed out above
-                }
-                n++;
+    outstream << "ps ";
+    // read the data line by line:
+    std::string line_buffer;
+    std::set<std::vector<int>> vector_set;
+    int n = 0; // line counter
+    while(std::getline(stream, line_buffer).good()) {
+        if (line_buffer.starts_with("query")) {
+            // we obtain the file names and store them:
+            std::istringstream input(line_buffer);
+            for (std::string word; std::getline(input, word, '\t'); ) {
+                filenames.push_back(word);
             }
+            // removes "query"
+            filenames.erase(filenames.begin());
+            // write the header of both all_rows and all_rows_unique :
+            for (const std::string &i : filenames) {
+                outstream << i << " ";
+            }
+            outstream << "\n" ;
+        } else {
+            // we write the body:
+            // 1: parse the line and build the Kmer
+            Kmer raw_data = process_line(line_buffer);
+            // 2: change, if needed, the allele description of the Kmer
+            Kmer data = minor_allele_description(raw_data);
+            // 3: keep track of the change in allele description
+            weight_corr_track << data.corrected << "\n";
+            // next
+            vector_of_kmers.push_back(data);
+            outstream << n << " " ;
+            for (const auto &i : data.pattern) {
+                outstream << i << " " ;
+            }
+            outstream << "\n" ;
+            // looks for the vector in the set of unique vectors :
+            auto search = vector_set.find(data.pattern) ;
+            // if not found, adds it to the vector of unique vectors
+            if (search == vector_set.end()) {
+                vector_of_unique_patterns.push_back(data.pattern);
+                vector_set.emplace(data.pattern);
+                std::vector<int> unitigs{n};
+                map_unique_to_all.emplace(data.pattern, unitigs);
+            } else {
+                map_unique_to_all[data.pattern].push_back(n);
+                // add n to the item (vector) pointed out above
+            }
+            n++;
         }
     }
     stream.close();
@@ -118,7 +114,7 @@ int main(int argc, char* argv[]) {
     weight_corr_track.close();
 
     // writes uniques and unique_to_all, gemma unique patterns to nb unitigs outputs
-    write_uniques(vector_of_unique_patterns, rawname, filenames, map_unique_to_all);
+    write_bugwas_gemma(vector_of_unique_patterns, rawname, filenames, map_unique_to_all);
 
     // finishing measuring time
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -127,10 +123,10 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-// definition
+// definitions
 Kmer process_line(const std::string& line_buffer) {
     /*
-     * this function processes lines by putting them in a structure than contains  its name, and a vector of its absence/presence pattern.
+     * this function processes lines by putting them in a structure than contains  the Kmer name, a vector of its absence/presence pattern. Ignores the corrected attribute.
      */
     std::vector<int> output_pattern;
     std::string kmer_name;
@@ -152,14 +148,15 @@ Kmer process_line(const std::string& line_buffer) {
 
 Kmer minor_allele_description(Kmer data) {
     /*
-     * this function changes the pattern of presence/absence of a Kmer into the minor allele description if needed, and
+     * this function changes the pattern of presence/absence of a Kmer into the minor allele description if needed, and changed the 'corrected' accordingly (1: did not change; -1: changed).
      */
-    int sum ;
+    float sum ;
     std::vector<int> corr_vector;
+    corr_vector.clear();
     for (auto& n : data.pattern) {
         sum += n;
     }
-    if (sum/data.pattern.size() > 0.5) {
+    if (sum/float(data.pattern.size()) > 0.5) {
         for (auto& n : data.pattern) {
             switch (n) {
                 case 0:
@@ -175,7 +172,7 @@ Kmer minor_allele_description(Kmer data) {
     return data;
 }
 
-void write_uniques(const std::vector<std::vector<int>>& vector_of_unique_patterns, std::string& rawname, std::vector<std::string>& filenames, std::map<std::vector<int>, std::vector<int>>& map_unique_to_all) {
+void write_bugwas_gemma(const std::vector<std::vector<int>>& vector_of_unique_patterns, std::string& rawname, std::vector<std::string>& filenames, std::map<std::vector<int>, std::vector<int>>& map_unique_to_all) {
     /*
      * this function builds output files : unique_patterns, unique_to_all, and gemma_pattern_to_nb_unitigs, gemma_unitig_to_patterns.
      */
@@ -200,7 +197,7 @@ void write_uniques(const std::vector<std::vector<int>>& vector_of_unique_pattern
         std::exit(1);
     }
 
-    //TODO: check that my understanding of the output files is good
+    //TODO: check that my understanding of the output files is ok
 
     // header for unique_pattern
     outstream_unique << "ps ";
