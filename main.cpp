@@ -152,17 +152,19 @@ Kmer minor_allele_description(Kmer data) {
      */
     float sum ;
     std::vector<int> corr_vector;
-    corr_vector.clear();
     for (auto& n : data.pattern) {
         sum += n;
     }
-    if (sum/float(data.pattern.size()) > 0.5) {
-        for (auto& n : data.pattern) {
-            switch (n) {
+    if (sum/(float)data.pattern.size() > 0.5) {
+        for (int i = 0; i < data.pattern.size(); i++) {
+            std::cout << i << std::endl;
+            switch (data.pattern.at(i)) {
                 case 0:
                     corr_vector.push_back(1);
+                    break;
                 case 1:
                     corr_vector.push_back(0);
+                    break;
             }
         }
         data.corrected = -1;
