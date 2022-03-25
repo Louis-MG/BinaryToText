@@ -8,7 +8,7 @@
 #include <map>
 
 //this struct contains the name of a kmer, and pattern is a vector of its absence/presence
-struct Kmer {
+struct SKmer {
     std::string name;
     std::vector<int> pattern;
     int corrected;
@@ -16,9 +16,10 @@ struct Kmer {
 
 
 // declarations
-Kmer process_line(const std::string& line_buffer);
+SKmer process_line(const std::string& line_buffer);
+SKmer binarise_counts(SKmer& data);
+SKmer minor_allele_description(SKmer& data);
 void write_bugwas_gemma(const std::vector<std::vector<int>>& vector_of_unique_patterns, std::string& rawname, std::vector<std::string>& filenames, std::map<std::vector<int>, std::vector<int>>& map_unique_to_all);
-Kmer minor_allele_description(Kmer data);
 
 int main(int argc, char* argv[]) {
     if (argc != 3) {
@@ -54,7 +55,7 @@ int main(int argc, char* argv[]) {
     }
 
     // variables
-    std::vector<Kmer> vector_of_kmers;
+    std::vector<SKmer> vector_of_kmers;
     std::vector<std::vector<int>> vector_of_unique_patterns ;
     std::vector<std::string> filenames ;
     std::vector<std::vector<int>> unique_to_all ;
@@ -81,11 +82,20 @@ int main(int argc, char* argv[]) {
             outstream << "\n" ;
         } else {
             // we write the body:
-            // 1: parse the line and build the Kmer
-            Kmer raw_data = process_line(line_buffer);
-            // 2: change, if needed, the allele description of the Kmer
-            Kmer data = minor_allele_description(raw_data);
-            // 3: keep track of the change in allele description
+            // 1: parse the line and build the SKmer
+            SKmer raw_data = process_line(line_buffer);
+            // 2: adds the counts to thew PhenoCounter vector
+            for (auto& count : raw_data.pattern) {
+                std::cout << count << std::endl ;
+            }
+            // 2: changes abundance counts to presence/absence (0 stays 0 and more than 1 becomes 1)
+            SKmer binarised_data = binarise_counts(raw_data);
+            for (auto & count : raw_data.pattern) {
+                std::cout << count << std::endl ;
+            }
+            // 3: change, if needed, the allele description of the SKmer
+            SKmer data = minor_allele_description(binarised_data);
+            // 4: keep track of the change in allele description
             weight_corr_track << data.corrected << "\n";
             // next
             vector_of_kmers.push_back(data);
@@ -124,7 +134,7 @@ int main(int argc, char* argv[]) {
 }
 
 // definitions
-Kmer process_line(const std::string& line_buffer) {
+SKmer process_line(const std::string& line_buffer) {
     /*
      * this function processes lines by putting them in a structure than contains  the Kmer name, a vector of its absence/presence pattern. Ignores the corrected attribute.
      */
@@ -135,10 +145,12 @@ Kmer process_line(const std::string& line_buffer) {
     for (std::string word; std::getline(input, word, '\t'); ) {
         if (word.starts_with(">")) { // if id resets line
             kmer_name = word;
-        } else if (word.ends_with("*")) { // if abundance is 0
+        } else if (word.ends_with("*")) { // if abundance is 0 : 0-20:*
             output_pattern.push_back(0);
-        } else {
-            output_pattern.push_back(1); // if abundance is anything else than 0
+        } else { // if abundance is more than 0
+            size_t lastindex = word.find_last_of(":");
+            std::string appearance_nb = word.substr(lastindex+1,word.size()-lastindex); // finds 17 in 0-20:17
+            output_pattern.push_back(std::stoi(appearance_nb));
         }
     }
     // Kmer output_struct{kmer_name, output_pattern};
@@ -146,7 +158,23 @@ Kmer process_line(const std::string& line_buffer) {
     return {kmer_name, output_pattern};
 }
 
-Kmer minor_allele_description(Kmer data) {
+SKmer binarise_counts(SKmer& data) {
+    /*
+     * this function binaries the abundance of a kmer
+     */
+    for (int i = 0; i < data.pattern.size(); i++) {
+        switch (data.pattern.at(i)) {
+            case 0:
+                break;
+            default:
+                data.pattern.at(i) = 1;
+                break;
+        }
+    }
+    return data;
+}
+
+SKmer minor_allele_description(SKmer& data) {
     /*
      * this function changes the pattern of presence/absence of a Kmer into the minor allele description if needed, and changed the 'corrected' accordingly (1: did not change; -1: changed).
      */
