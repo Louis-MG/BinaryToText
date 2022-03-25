@@ -84,15 +84,8 @@ int main(int argc, char* argv[]) {
             // we write the body:
             // 1: parse the line and build the SKmer
             SKmer raw_data = process_line(line_buffer);
-            // 2: adds the counts to thew PhenoCounter vector
-            for (auto& count : raw_data.pattern) {
-                std::cout << count << std::endl ;
-            }
             // 2: changes abundance counts to presence/absence (0 stays 0 and more than 1 becomes 1)
             SKmer binarised_data = binarise_counts(raw_data);
-            for (auto & count : raw_data.pattern) {
-                std::cout << count << std::endl ;
-            }
             // 3: change, if needed, the allele description of the SKmer
             SKmer data = minor_allele_description(binarised_data);
             // 4: keep track of the change in allele description
@@ -185,7 +178,6 @@ SKmer minor_allele_description(SKmer& data) {
     }
     if (sum/(float)data.pattern.size() > 0.5) {
         for (int i = 0; i < data.pattern.size(); i++) {
-            std::cout << i << std::endl;
             switch (data.pattern.at(i)) {
                 case 0:
                     corr_vector.push_back(1);
