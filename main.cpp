@@ -55,6 +55,9 @@ int main(int argc, char* argv[]) {
     }
 
     // variables
+    SKmer raw_data;
+    SKmer binarised_data;
+    SKmer data;
     std::vector<SKmer> vector_of_kmers;
     std::vector<std::vector<int>> vector_of_unique_patterns ;
     std::vector<std::string> filenames ;
