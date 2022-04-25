@@ -57,6 +57,7 @@ int main(int argc, char* argv[]) {
     SKmer raw_data;
     SKmer binarised_data;
     SKmer data;
+    int corrected;
     std::vector<std::vector<int>> vector_of_unique_patterns ;
     std::vector<std::string> filenames ;
     std::vector<std::vector<int>> unique_to_all ;
@@ -71,7 +72,7 @@ int main(int argc, char* argv[]) {
         if (line_buffer.starts_with("query")) {
             // we obtain the file names and store them:
             std::istringstream input(line_buffer);
-            for (std::string word; std::getline(input, word, '\t'); ) {
+            for (std::string word; std::getline(input, word, ' '); ) {
                 filenames.push_back(word);
             }
             // removes "query"
@@ -90,7 +91,8 @@ int main(int argc, char* argv[]) {
             // 3: change, if needed, the allele description of the SKmer
             SKmer data = minor_allele_description(binarised_data);
             // 4: keep track of the change in allele description
-            weight_corr_track << data.corrected << "\n";
+            corrected = (data.corrected) ? -1 : 1;
+            weight_corr_track << corrected << "\n";
             // next
             outstream << n << " " ;
             for (const auto &i : data.pattern) {
@@ -142,12 +144,11 @@ SKmer process_line(const std::string& line_buffer) {
      * this function processes lines by putting them in a structure than contains  the Kmer name, a vector of its absence/presence pattern. Ignores the corrected attribute.
      */
     std::vector<int> output_pattern;
-    std::string kmer_name;
     std::istringstream input(line_buffer);
     //loop over tab-separated words in the line :
     for (std::string word; std::getline(input, word, '\t'); ) {
         if (word.starts_with(">")) { // if id resets line
-            kmer_name = word;
+            continue ;
         } else if (word.ends_with("*")) { // if abundance is 0 : 0-20:*
             output_pattern.push_back(0);
         } else { // if abundance is more than 0
@@ -197,10 +198,10 @@ SKmer minor_allele_description(SKmer& data) {
                     break;
             }
         }
-        data.corrected = false ;
+        data.corrected = true ;
         data.pattern = corr_vector;
     } else {
-        data.corrected = true ;
+        data.corrected = false ;
     }
     return data;
 }
