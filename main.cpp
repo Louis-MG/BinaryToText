@@ -9,7 +9,6 @@
 
 //this struct contains the name of a kmer, and pattern is a vector of its absence/presence
 struct SKmer {
-    std::string name;
     std::vector<int> pattern;
     int corrected;
 };
@@ -78,7 +77,7 @@ int main(int argc, char* argv[]) {
             }
             // removes "query"
             filenames.erase(filenames.begin());
-            // write the header of both all_rows and all_rows_unique :
+            // write the header of all_rows :
             for (const std::string &i : filenames) {
                 outstream << i << " ";
             }
@@ -108,6 +107,7 @@ int main(int argc, char* argv[]) {
                 vector_set.emplace(data.pattern);
                 std::vector<int> unitigs{n};
                 map_unique_to_all.emplace(data.pattern, unitigs);
+                unitigs.clear();
             } else {
                 map_unique_to_all[data.pattern].push_back(n);
                 // add n to the item (vector) pointed out above
@@ -172,7 +172,7 @@ SKmer binarise_counts(SKmer& data) {
 
 SKmer minor_allele_description(SKmer& data) {
     /*
-     * this function changes the pattern of presence/absence of a Kmer into the minor allele description if needed, and changed the 'corrected' accordingly (1: did not change; -1: changed).
+     * this function changes the pattern of presence/absence of a SKmer into the minor allele description if needed, and changed the 'corrected' accordingly (true: did not change; false: changed).
      */
     float sum ;
     std::vector<int> corr_vector;
@@ -190,10 +190,10 @@ SKmer minor_allele_description(SKmer& data) {
                     break;
             }
         }
-        data.corrected = -1;
+        data.corrected = false ;
         data.pattern = corr_vector;
     } else {
-        data.corrected = 1;
+        data.corrected = true ;
     }
     return data;
 }
