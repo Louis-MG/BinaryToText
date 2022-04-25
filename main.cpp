@@ -119,6 +119,9 @@ int main(int argc, char* argv[]) {
     outstream.close();
     weight_corr_track.close();
 
+    std::cout << "size of vector_set :" << vector_set.size() << std::endl;
+    std::cout << "size of vectro of unique patterns :" << vector_of_unique_patterns.size() << std::endl ;
+
     // writes uniques and unique_to_all, gemma unique patterns to nb unitigs outputs
     write_bugwas_gemma(vector_of_unique_patterns, rawname, filenames, map_unique_to_all);
 
