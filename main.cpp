@@ -57,7 +57,6 @@ int main(int argc, char* argv[]) {
     SKmer raw_data;
     SKmer binarised_data;
     SKmer data;
-    std::vector<SKmer> vector_of_kmers;
     std::vector<std::vector<int>> vector_of_unique_patterns ;
     std::vector<std::string> filenames ;
     std::vector<std::vector<int>> unique_to_all ;
@@ -93,7 +92,6 @@ int main(int argc, char* argv[]) {
             // 4: keep track of the change in allele description
             weight_corr_track << data.corrected << "\n";
             // next
-            vector_of_kmers.push_back(data);
             outstream << n << " " ;
             for (const auto &i : data.pattern) {
                 outstream << i << " " ;
@@ -119,6 +117,12 @@ int main(int argc, char* argv[]) {
     outstream.close();
     weight_corr_track.close();
 
+    for (auto i : vector_set) {
+        for (int j : i) {
+            std::cout << j << " ";
+        }
+        std::cout << std::endl ;
+    }
     std::cout << "size of vector_set :" << vector_set.size() << std::endl;
     std::cout << "size of vectro of unique patterns :" << vector_of_unique_patterns.size() << std::endl ;
 
