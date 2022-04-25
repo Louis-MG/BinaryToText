@@ -151,7 +151,7 @@ SKmer process_line(const std::string& line_buffer) {
     }
     // Kmer output_struct{kmer_name, output_pattern};
     // output_pattern.clear();
-    return {kmer_name, output_pattern};
+    return {output_pattern};
 }
 
 SKmer binarise_counts(SKmer& data) {
